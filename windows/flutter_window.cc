@@ -13,6 +13,7 @@
 
 #include "include/desktop_multi_window/desktop_multi_window_plugin.h"
 #include "multi_window_plugin_internal.h"
+#include "flutter/standard_method_codec.h"
 
 namespace {
 
@@ -75,6 +76,11 @@ void EnableFullDpiSupportIfAvailable(HWND hwnd) {
 
 }
 
+std::unique_ptr<
+    flutter::MethodChannel<flutter::EncodableValue>,
+    std::default_delete<flutter::MethodChannel<flutter::EncodableValue>>>
+    channel = nullptr;
+
 FlutterWindow::FlutterWindow(
     int64_t id,
     std::string args,
@@ -104,6 +110,12 @@ FlutterWindow::FlutterWindow(
   if (!flutter_controller_->engine() || !flutter_controller_->view()) {
     std::cerr << "Failed to setup FlutterViewController." << std::endl;
   }
+
+  channel =
+      std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
+          flutter_controller_->engine()->messenger(), "mixin.one/flutter_multi_window_events",
+          &flutter::StandardMethodCodec::GetInstance());
+
   auto view_handle = flutter_controller_->view()->GetNativeWindow();
   SetParent(view_handle, window_handle);
   MoveWindow(view_handle, 0, 0, frame.right - frame.left, frame.bottom - frame.top, true);
@@ -172,6 +184,10 @@ LRESULT FlutterWindow::MessageHandler(HWND hwnd, UINT message, WPARAM wparam, LP
       return 0;
     }
     case WM_CLOSE: {
+        flutter::EncodableMap args = flutter::EncodableMap();
+        args[flutter::EncodableValue("windowId")] =
+            flutter::EncodableValue(id_);
+        channel->InvokeMethod("close", std::make_unique<flutter::EncodableValue>(args));
       if (auto callback = callback_.lock()) {
         callback->OnWindowClose(id_);
       }

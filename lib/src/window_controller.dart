@@ -45,4 +45,7 @@ abstract class WindowController {
 
   /// Available only on macOS.
   Future<void> setFrameAutosaveName(String name);
+
+  /// Sets callback that will be called on the current window close event.
+  void setOnWindowClose(VoidCallback callback);
 }

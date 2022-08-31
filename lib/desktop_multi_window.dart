@@ -9,6 +9,9 @@ import 'src/window_controller_impl.dart';
 export 'src/window_controller.dart';
 
 class DesktopMultiWindow {
+  /// ID of the main window.
+  static const mainWindowId = 0;
+
   /// Create a new Window.
   ///
   /// The new window instance will call `main` method in your `main.dart` file in
