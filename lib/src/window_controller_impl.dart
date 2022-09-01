@@ -12,16 +12,7 @@ class WindowControllerMainImpl extends WindowController {
   // the id of this window
   final int _id;
 
-  Future<void> Function() _onClose = () async {};
-
-  WindowControllerMainImpl(this._id) {
-    MethodChannel('mixin.one/flutter_multi_window_events')
-        .setMethodCallHandler((methodCall) async {
-      if (methodCall.method == 'close') {
-        await _onClose();
-      }
-    });
-  }
+  WindowControllerMainImpl(this._id);
 
   @override
   int get windowId => _id;
@@ -89,6 +80,15 @@ class WindowControllerMainImpl extends WindowController {
 
   @override
   void setOnWindowClose(Future<void> Function() callback) {
-    _onClose = callback;
+    MethodChannel('mixin.one/flutter_multi_window_events')
+        .setMethodCallHandler((methodCall) async {
+      if (methodCall.method == 'close') {
+        try {
+          await callback();
+        } finally {
+          close();
+        }
+      }
+    });
   }
 }

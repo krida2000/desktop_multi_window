@@ -12,6 +12,9 @@ class DesktopMultiWindow {
   /// ID of the main window.
   static const mainWindowId = 0;
 
+  static List<Future<dynamic> Function(MethodCall call, int fromWindowId)>
+      handlers = [];
+
   /// Create a new Window.
   ///
   /// The new window instance will call `main` method in your `main.dart` file in
@@ -41,8 +44,8 @@ class DesktopMultiWindow {
 
   /// Invoke method on the isolate of the window.
   ///
-  /// Need use [setMethodHandler] in the target window isolate to handle the
-  /// method.
+  /// Need use [setMethodHandlers], [addMethodHandler] and [removeMethodHandler]
+  /// in the target window isolate to handle the method.
   ///
   /// [targetWindowId] which window you want to invoke the method.
   static Future<dynamic> invokeMethod(int targetWindowId, String method,
@@ -59,19 +62,27 @@ class DesktopMultiWindow {
   /// for example: you can not receive the method call which target window isn't
   /// main window in main window isolate.
   ///
-  static void setMethodHandler(
-      Future<dynamic> Function(MethodCall call, int fromWindowId)? handler) {
-    if (handler == null) {
-      windowEventChannel.setMethodCallHandler(null);
-      return;
-    }
+  static void setMethodHandlers() {
     windowEventChannel.setMethodCallHandler((call) async {
       final fromWindowId = call.arguments['fromWindowId'] as int;
       final arguments = call.arguments['arguments'];
-      final result =
-          await handler(MethodCall(call.method, arguments), fromWindowId);
-      return result;
+
+      var futures = handlers
+          .map((e) => e.call(MethodCall(call.method, arguments), fromWindowId))
+          .toList();
+
+      await Future.wait(futures);
     });
+  }
+
+  static void addMethodHandler(
+      Future<dynamic> Function(MethodCall call, int fromWindowId) handler) {
+    handlers.add(handler);
+  }
+
+  static void removeMethodHandler(
+      Future<dynamic> Function(MethodCall call, int fromWindowId) handler) {
+    handlers.remove(handler);
   }
 
   /// Get all sub window id.

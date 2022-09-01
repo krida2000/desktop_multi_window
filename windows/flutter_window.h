@@ -45,6 +45,8 @@ class FlutterWindow : public BaseFlutterWindow {
 
   HWND window_handle_;
 
+  bool isPreventClose_ = true;
+
   int64_t id_;
 
   // The Flutter instance hosted by this window.

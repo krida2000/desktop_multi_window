@@ -184,10 +184,17 @@ LRESULT FlutterWindow::MessageHandler(HWND hwnd, UINT message, WPARAM wparam, LP
       return 0;
     }
     case WM_CLOSE: {
-        flutter::EncodableMap args = flutter::EncodableMap();
-        args[flutter::EncodableValue("windowId")] =
-            flutter::EncodableValue(id_);
-        channel->InvokeMethod("close", std::make_unique<flutter::EncodableValue>(args));
+        if (isPreventClose_) {
+            isPreventClose_ = false;
+
+            flutter::EncodableMap args = flutter::EncodableMap();
+            args[flutter::EncodableValue("windowId")] =
+                flutter::EncodableValue(id_);
+            channel->InvokeMethod("close", std::make_unique<flutter::EncodableValue>(args));            
+
+            return -1;
+        }
+        
       if (auto callback = callback_.lock()) {
         callback->OnWindowClose(id_);
       }
